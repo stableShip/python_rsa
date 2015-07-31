@@ -1,36 +1,44 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import rsa
+from Crypto.PublicKey import RSA
+from Crypto.Signature import PKCS1_v1_5
+from Crypto.Hash import SHA256
+import json
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 
-# 先生成一对密钥，然后保存.pem格式文件，当然也可以直接使用
-(pubkey, privkey) = rsa.newkeys(1024)
 
-pub = pubkey.save_pkcs1()
-pubfile = open('public.pem', 'w+')
-pubfile.write(pub)
-pubfile.close()
+def dict_to_binary(the_dict):
+    str = json.dumps(the_dict)
+    binary = ' '.join(format(ord(letter), 'b') for letter in str)
+    return binary
 
-pri = privkey.save_pkcs1()
-prifile = open('private.pem', 'w+')
-prifile.write(pri)
-prifile.close()
 
-# load公钥和密钥
-message = 'hello'
-with open('public.pem') as publickfile:
-    p = publickfile.read()
-    pubkey = rsa.PublicKey.load_pkcs1(p)
+def get_sign():
+    datas = open('message.json').read()
+    data = json.loads(datas, encoding="utf-8")
+    data = json.dumps(data, ensure_ascii=False, separators=(',', ':'), sort_keys=True)
+    print "signdata:~~~~~~~~", data
+    key = RSA.importKey(open('private.pem').read())
+    h = SHA256.new(data)
+    signer = PKCS1_v1_5.new(key)
+    signature = signer.sign(h)
+    return signature
 
-with open('private.pem') as privatefile:
-    p = privatefile.read()
-    privkey = rsa.PrivateKey.load_pkcs1(p)
 
-# 用公钥加密、再用私钥解密
-crypto = rsa.encrypt(message, pubkey)
-message = rsa.decrypt(crypto, privkey)
-print message
+def verify():
+    signs = get_sign()
+    pubkey = RSA.importKey(open('public.pem').read())
+    datas = open('message.json').read()
+    data = json.loads(datas, encoding="utf-8")
+    data = json.dumps(data, ensure_ascii=False, separators=(',', ':'), sort_keys=True)
 
-# sign 用私钥签名认真、再用公钥验证签名
-signature = rsa.sign(message, privkey, 'SHA-1')
-print rsa.verify('hello', signature, pubkey)
+    print "verifydata:~~~~~~~",str(data)
+    digest = SHA256.new(data)
+    pkcs = PKCS1_v1_5.new(pubkey)
+    print pkcs.verify(digest, signs)
+    return pkcs.verify(digest, signs)
+
+
+verify()
