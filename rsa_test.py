@@ -8,13 +8,6 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 
-
-def dict_to_binary(the_dict):
-    str = json.dumps(the_dict)
-    binary = ' '.join(format(ord(letter), 'b') for letter in str)
-    return binary
-
-
 def get_sign():
     datas = open('message.json').read()
     data = json.loads(datas, encoding="utf-8")
