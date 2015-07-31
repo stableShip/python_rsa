@@ -27,7 +27,7 @@ def verify():
     data = json.loads(datas, encoding="utf-8")
     data = json.dumps(data, ensure_ascii=False, separators=(',', ':'), sort_keys=True)
 
-    print "verifydata:~~~~~~~",str(data)
+    print "verifydata:~~~~~~~", data
     digest = SHA256.new(data)
     pkcs = PKCS1_v1_5.new(pubkey)
     print pkcs.verify(digest, signs)
